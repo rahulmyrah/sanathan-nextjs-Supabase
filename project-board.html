@@ -1,0 +1,706 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sanathan - High-Scale Migration Project Board</title>
+  <!-- Load Premium Brand Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      /* Brand Color Tokens */
+      --cosmic-dark: #07090e;
+      --cosmic-slate: #0b0d17;
+      --cosmic-card: rgba(16, 20, 35, 0.65);
+      --cosmic-border: rgba(212, 175, 55, 0.15);
+      --solar-amber: #ff9f1c;
+      --solar-gold: #d4af37;
+      --spiritual-maroon: #8f101d;
+      --spiritual-cream: #faf5eb;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      
+      /* Status Colors */
+      --status-backlog: #64748b;
+      --status-todo: #3b82f6;
+      --status-progress: #ff9f1c;
+      --status-done: #10b981;
+      
+      /* Shadows & Blurs */
+      --glass-blur: blur(14px);
+      --card-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+      --border-radius-lg: 20px;
+      --border-radius-md: 14px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      scrollbar-width: thin;
+      scrollbar-color: var(--solar-gold) var(--cosmic-dark);
+    }
+
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--cosmic-dark);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(212, 175, 55, 0.3);
+      border-radius: 999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--solar-amber);
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      background-color: var(--cosmic-dark);
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(212, 175, 55, 0.08), transparent 35%),
+        radial-gradient(circle at 90% 10%, rgba(143, 16, 29, 0.12), transparent 40%),
+        radial-gradient(circle at 50% 80%, rgba(255, 159, 28, 0.05), transparent 45%);
+      background-attachment: fixed;
+    }
+
+    .shell {
+      width: min(1600px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 30px 0 50px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 35px;
+      padding: 24px;
+      background: rgba(11, 13, 23, 0.6);
+      border: 1px solid var(--cosmic-border);
+      border-radius: var(--border-radius-lg);
+      backdrop-filter: var(--glass-blur);
+      box-shadow: var(--card-shadow);
+    }
+
+    .brand {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+
+    .mark {
+      display: grid;
+      place-items: center;
+      width: 70px;
+      height: 70px;
+      border-radius: 22px;
+      color: var(--text-primary);
+      background: linear-gradient(135deg, var(--spiritual-maroon), var(--solar-amber));
+      box-shadow: 0 0 25px rgba(255, 159, 28, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      font-family: 'Outfit', sans-serif;
+      font-size: 32px;
+      font-weight: 900;
+      position: relative;
+    }
+    
+    .mark::after {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 24px;
+      background: linear-gradient(135deg, var(--solar-gold), transparent);
+      z-index: -1;
+      opacity: 0.5;
+    }
+
+    .title-area h1 {
+      margin: 0;
+      color: #fff;
+      font-family: 'Outfit', sans-serif;
+      font-size: clamp(26px, 3.5vw, 38px);
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(to right, #fff 40%, var(--solar-gold) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      margin: 6px 0 0;
+      color: var(--text-secondary);
+      font-size: 14px;
+      font-weight: 400;
+    }
+
+    .summary-stats {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .stat-pill {
+      border: 1px solid var(--cosmic-border);
+      border-radius: 999px;
+      background: rgba(16, 20, 35, 0.8);
+      color: var(--text-secondary);
+      padding: 10px 18px;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    .stat-pill span.highlight {
+      color: var(--solar-gold);
+      font-weight: 800;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(280px, 1fr));
+      gap: 20px;
+      align-items: start;
+      overflow-x: auto;
+      padding-bottom: 12px;
+    }
+
+    .column {
+      border: 1px solid var(--cosmic-border);
+      border-radius: var(--border-radius-lg);
+      background: rgba(11, 13, 23, 0.45);
+      backdrop-filter: var(--glass-blur);
+      box-shadow: var(--card-shadow);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      max-height: 80vh;
+    }
+
+    .column-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 18px 20px;
+      background: rgba(16, 20, 35, 0.85);
+      border-bottom: 1px solid var(--cosmic-border);
+    }
+
+    .column-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 0;
+      color: #fff;
+      font-family: 'Outfit', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      position: relative;
+    }
+    
+    .backlog .dot { background: var(--status-backlog); box-shadow: 0 0 10px var(--status-backlog); }
+    .todo .dot { background: var(--status-todo); box-shadow: 0 0 10px var(--status-todo); }
+    .progress .dot { background: var(--status-progress); box-shadow: 0 0 10px var(--status-progress); }
+    .done .dot { background: var(--status-done); box-shadow: 0 0 10px var(--status-done); }
+
+    .count {
+      border-radius: 999px;
+      color: var(--cosmic-dark);
+      background: var(--solar-gold);
+      min-width: 24px;
+      height: 24px;
+      padding: 0 6px;
+      text-align: center;
+      font-family: 'Outfit', sans-serif;
+      font-size: 12px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 12px rgba(212, 175, 55, 0.4);
+    }
+
+    .cards {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 16px;
+      overflow-y: auto;
+      max-height: calc(80vh - 65px);
+    }
+
+    .card {
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: var(--border-radius-md);
+      background: var(--cosmic-card);
+      padding: 16px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: transparent;
+      transition: var(--transition);
+    }
+    
+    .backlog .card::before { background: var(--status-backlog); }
+    .todo .card::before { background: var(--status-todo); }
+    .progress .card::before { background: var(--status-progress); }
+    .done .card::before { background: var(--status-done); }
+
+    .card:hover {
+      transform: translateY(-3px) scale(1.01);
+      border-color: rgba(212, 175, 55, 0.3);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35);
+    }
+
+    .card h3 {
+      margin: 0 0 8px;
+      color: #fff;
+      font-family: 'Outfit', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.35;
+      letter-spacing: 0.1px;
+    }
+
+    .card p {
+      margin: 0;
+      color: var(--text-secondary);
+      font-size: 12.5px;
+      line-height: 1.5;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 14px;
+    }
+
+    .tag {
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      color: var(--text-secondary);
+      padding: 3px 8px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      text-transform: uppercase;
+    }
+    
+    .tag.highlight {
+      color: var(--solar-amber);
+      background: rgba(255, 159, 28, 0.08);
+      border-color: rgba(255, 159, 28, 0.15);
+    }
+
+    .priority-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 10px;
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+    }
+    
+    .priority-badge.high {
+      background: rgba(143, 16, 29, 0.25);
+      border: 1px solid rgba(143, 16, 29, 0.4);
+      color: #fca5a5;
+    }
+    .priority-badge.medium {
+      background: rgba(255, 159, 28, 0.15);
+      border: 1px solid rgba(255, 159, 28, 0.3);
+      color: #fde047;
+    }
+    .priority-badge.low {
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      color: #c7d2fe;
+    }
+
+    footer {
+      margin-top: 30px;
+      border: 1px solid var(--cosmic-border);
+      border-radius: var(--border-radius-md);
+      background: rgba(11, 13, 23, 0.6);
+      backdrop-filter: var(--glass-blur);
+      color: var(--text-muted);
+      padding: 16px 20px;
+      font-size: 12px;
+      line-height: 1.6;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    footer .copyright {
+      color: var(--text-secondary);
+    }
+
+    @media (max-width: 1200px) {
+      .board {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (max-width: 768px) {
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .board {
+        grid-template-columns: 1fr;
+      }
+      .summary-stats {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div class="brand">
+        <div class="mark">ॐ</div>
+        <div class="title-area">
+          <h1>Sanathan Migration Hub</h1>
+          <p class="subtitle">Real-time Project Kanban Dashboard tracking the NestJS (Supabase) + Flutter offline-first rebuild.</p>
+        </div>
+      </div>
+      <div class="summary-stats">
+        <div class="stat-pill">Platform: <span class="highlight">Supabase + NestJS</span></div>
+        <div class="stat-pill">Flutter UI Engine: <span class="highlight">Outfit + Glassmorphism</span></div>
+        <div class="stat-pill">State: <span class="highlight">Phase 1 Complete, Phase 2 In-Progress</span></div>
+      </div>
+    </header>
+
+    <section class="board" aria-label="Sanathan project migration kanban board">
+      
+      <!-- COLUMN 1: MIGRATION BACKLOG -->
+      <article class="column backlog">
+        <div class="column-header">
+          <h2 class="column-title"><span class="dot"></span>Migration Backlog</h2>
+          <span class="count">8</span>
+        </div>
+        <div class="cards">
+          
+          <div class="card">
+            <span class="priority-badge low">Low</span>
+            <h3>Astromall E-Commerce Catalog API</h3>
+            <p>Migrate products, recommedations and product categories tables. Build admin CMS for Gemstones, Rudraksha inventory with shipping logs.</p>
+            <div class="tags">
+              <span class="tag">NestJS</span>
+              <span class="tag">Astromall</span>
+              <span class="tag">E-Commerce</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <span class="priority-badge low">Low</span>
+            <h3>Online Puja Packages Catalog</h3>
+            <p>Implement Puja categories, packages and FAQs modules. Build puja ordering and astrologer recommendation linkings.</p>
+            <div class="tags">
+              <span class="tag">NestJS</span>
+              <span class="tag">Marketplace</span>
+              <span class="tag">Pujas</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <span class="priority-badge low">Low</span>
+            <h3>Help Desk Support & Tickets</h3>
+            <p>Build custom support system translating legacy help support tables. Enable ticket creations, chat answers, and status updates.</p>
+            <div class="tags">
+              <span class="tag">NestJS</span>
+              <span class="tag">Support</span>
+              <span class="tag">CMS</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <span class="priority-badge medium">Medium</span>
+            <h3>FCM & OneSignal Notifications Scheduler</h3>
+            <p>Scaffold background workers that read notifications scheduler lists and deliver FCM/OneSignal payloads asynchronously without locking HTTP threads.</p>
+            <div class="tags">
+              <span class="tag">NestJS</span>
+              <span class="tag">FCM</span>
+              <span class="tag">Queues</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <span class="priority-badge medium">Medium</span>
+            <h3>Guruji Stories and Engagement</h3>
+            <p>Port legacy stories table. Enable Gurujis to post temporary (24h) photos/videos updates with automatic Redis-driven expiration counters.</p>
+            <div class="tags">
+              <span class="tag">NestJS</span>
+              <span class="tag">Redis</span>
+              <span class="tag">Stories</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <span class="priority-badge high">High</span>
+            <h3>Guruji Native Kundali JSON Viewer</h3>
+            <p>Build custom radial Kundali chart component in Flutter to draw native birth houses dynamically from the shared P2P JSON payload.</p>
+            <div class="tags">
+              <span class="tag">Flutter Guruji</span>
+              <span class="tag">UI Widgets</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <span class="priority-badge medium">Medium</span>
+            <h3>Scriptural Vector RAG Assistant</h3>
+            <p>Integrate vector search helper box inside Guruji consultation screen allowing Guruji to semantically query scripture passages and copy directly.</p>
+            <div class="tags">
+              <span class="tag">Flutter Guruji</span>
+              <span class="tag">AI RAG</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <span class="priority-badge medium">Medium</span>
+            <h3>Agora & Zego Consultation Signaling</h3>
+            <p>Deploy token dispatching modules within NestJS to initialize video/voice session keys dynamically using system flag keys during accepted calls.</p>
+            <div class="tags">
+              <span class="tag">WebSockets</span>
+              <span class="tag">WebRTC</span>
+            </div>
+          </div>
+
+        </div>
+      </article>
+
+      <!-- COLUMN 2: SPRINT TODO -->
+      <article class="column todo">
+        <div class="column-header">
+          <h2 class="column-title"><span class="dot"></span>Sprint Todo</h2>
+          <span class="count">6</span>
+        </div>
+        <div class="cards">
+
+          <div class="card">
+            <span class="priority-badge high">High</span>
+            <h3>Lazy Authentication Guards</h3>
+            <p>Write request filters and interceptors verifying Supabase Auth JWT tokens only for premium actions or wallet checkouts.</p>
+            <div class="tags">
+              <span class="tag">NestJS</span>
+              <span class="tag">Security</span>
+              <span class="tag">JWT</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <span class="priority-badge high">High</span>
+            <h3>Razorpay & Stripe Payment Webhooks</h3>
+            <p>Implement Razorpay, Stripe, and Cashfree payment confirmation controllers to handle safe user wallet credits and ledger entries.</p>
+            <div class="tags">
+              <span class="tag">NestJS</span>
+              <span class="tag">Payments</span>
+              <span class="tag">Ledger</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <span class="priority-badge high">High</span>
+            <h3>WebSocket Socket.io Gateway</h3>
+            <p>Deploy real-time consultations gateway managing live connections, waitlists sorted queues in Redis, and dynamic channels.</p>
+            <div class="tags">
+              <span class="tag">NestJS</span>
+              <span class="tag">WebSockets</span>
+              <span class="tag">Redis</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <span class="priority-badge medium">Medium</span>
+            <h3>AI Vector RAG Scripture Pipeline</h3>
+            <p>Hook Qdrant/Pinecone search pipeline retrieving verified Pujas and Slokas with semantic threshold check & LLM backup fallback.</p>
+            <div class="tags">
+              <span class="tag">NestJS</span>
+              <span class="tag">AI RAG</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <span class="priority-badge high">High</span>
+            <h3>Flutter Offline-First Isar DB Caching</h3>
+            <p>Integrate Isar DB inside Customer app to hold pre-fetched daily Panchang and horoscope datasets, enabling offline launches.</p>
+            <div class="tags">
+              <span class="tag">Flutter User</span>
+              <span class="tag">Database</span>
+              <span class="tag">Isar</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <span class="priority-badge high">High</span>
+            <h3>Flutter Guruji Real-time Chat Sync</h3>
+            <p>Wiring WebSockets client inside Guruji app to handle incoming waitlist push notifications and live consultation chat frames.</p>
+            <div class="tags">
+              <span class="tag">Flutter Guruji</span>
+              <span class="tag">WebSockets</span>
+            </div>
+          </div>
+
+        </div>
+      </article>
+
+      <!-- COLUMN 3: IN PROGRESS -->
+      <article class="column progress">
+        <div class="column-header">
+          <h2 class="column-title"><span class="dot"></span>In Progress</h2>
+          <span class="count">2</span>
+        </div>
+        <div class="cards">
+
+          <div class="card">
+            <span class="priority-badge high">High</span>
+            <h3>Wallet & Recharge API Module</h3>
+            <p>Writing standard Wallet recharge controllers, USD-to-INR conversion gates, partner payouts splits (70/30 commission ledger), and commission types.</p>
+            <div class="tags">
+              <span class="tag highlight">Coding</span>
+              <span class="tag">NestJS</span>
+              <span class="tag">Wallet</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <span class="priority-badge high">High</span>
+            <h3>Flutter Lazy-Auth Setup</h3>
+            <p>Wiring lazy authentication interceptors triggering quick phone OTP sign-ins only when connecting to Consultations or checking out.</p>
+            <div class="tags">
+              <span class="tag highlight">Coding</span>
+              <span class="tag">Flutter User</span>
+              <span class="tag">Auth</span>
+            </div>
+          </div>
+
+        </div>
+      </article>
+
+      <!-- COLUMN 4: COMPLETED -->
+      <article class="column done">
+        <div class="column-header">
+          <h2 class="column-title"><span class="dot"></span>Completed</h2>
+          <span class="count">7</span>
+        </div>
+        <div class="cards">
+
+          <div class="card">
+            <span class="priority-badge high">High</span>
+            <h3>Daily Horoscope & Panchang Module</h3>
+            <p>Implemented AstrologyService and controllers handling midnight IST cron calculations, Vedicastro proxy limits validation, coordinate caching, and automatic mock backups.</p>
+            <div class="tags">
+              <span class="tag">NestJS</span>
+              <span class="tag">Cron Jobs</span>
+              <span class="tag">Caching</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <span class="priority-badge high">High</span>
+            <h3>CDN Edge Cache Invalidation Headers</h3>
+            <p>Injected public Cache-Control headers on horoscope and Panchang endpoints (`public, max-age=43200, s-maxage=86400`) enabling instant 24h global CDN edge hits.</p>
+            <div class="tags">
+              <span class="tag">NestJS</span>
+              <span class="tag">Cloudflare</span>
+              <span class="tag">CDN</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>NestJS Workspace Initialized</h3>
+            <p>Successfully scaffolded fresh TypeScript NestJS environment using strict CLI configurations in the directory root.</p>
+            <div class="tags">
+              <span class="tag">Dev Env</span>
+              <span class="tag">TypeScript</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>High-Scale Prisma Schema Setup</h3>
+            <p>Configured high-scale DB tables including Lazy-Auth Users, Wallets, Transactions, Consultations, Waitlists, and Cached Astrology models.</p>
+            <div class="tags">
+              <span class="tag">Prisma</span>
+              <span class="tag">PostgreSQL</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Prisma Client Compilation</h3>
+            <p>Compiled robust Prisma types leveraging Prisma 7.8 config structures for full compile-time database safety.</p>
+            <div class="tags">
+              <span class="tag">Prisma</span>
+              <span class="tag">Type Safety</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Environment Variable Infrastructure</h3>
+            <p>Created baseline configuration settings handling secure credentials for Redis, Supabase, Vedicastro, and AI vector stores.</p>
+            <div class="tags">
+              <span class="tag">Security</span>
+              <span class="tag">Config</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Global Task Scheduler Module</h3>
+            <p>Registered schedule module engine globally in main app module to allow background cron tasks to fire at precise IST offsets.</p>
+            <div class="tags">
+              <span class="tag">NestJS</span>
+              <span class="tag">Cron Setup</span>
+            </div>
+          </div>
+
+        </div>
+      </article>
+
+    </section>
+
+    <footer>
+      <div class="copyright">© 2026 Sanathan Mobile App Rebuild. Pair-programming live dashboard.</div>
+      <div class="build-ver">Hub Version 2.6 (Comprehensive Sync)</div>
+    </footer>
+  </main>
+</body>
+</html>

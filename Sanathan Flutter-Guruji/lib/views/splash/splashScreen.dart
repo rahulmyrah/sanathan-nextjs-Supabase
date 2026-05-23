@@ -1,0 +1,104 @@
+// ignore_for_file: must_be_immutable
+
+import 'package:astrowaypartner/constants/imageConst.dart';
+import 'package:astrowaypartner/utils/global.dart' as global;
+import 'package:astrowaypartner/controllers/splashController.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:sizer/sizer.dart';
+
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
+  final splashController = Get.put(SplashController());
+  late AnimationController _rotationController;
+
+  @override
+  void initState() {
+    super.initState();
+    _rotationController = AnimationController(
+      duration: const Duration(seconds: 20), // Rotation speed
+      vsync: this,
+    )..repeat(); // Infinite rotation
+  }
+
+  @override
+  void dispose() {
+    _rotationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      top: false,
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: ClipRect(
+                  child: SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.22,
+                    child: OverflowBox(
+                      maxHeight: double.infinity,
+                      alignment: Alignment.bottomLeft,
+                      child: Center(
+                        child: RotationTransition(
+                          turns: _rotationController,
+                          child: Image.asset(
+                            IMAGECONST.callBackImage,
+                            width: MediaQuery.of(context).size.width * 1.2,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Spacer(),
+              Image.asset('assets/images/splash.png', height: 20.h),
+              SizedBox(height: 10),
+              global.appName != ""
+                  ? Text(global.appName, style: Get.textTheme.headlineSmall)
+                  : const SizedBox(),
+              Spacer(),
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: ClipRect(
+                  child: SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.22,
+                    child: OverflowBox(
+                      maxHeight: double.infinity,
+                      alignment: Alignment.topCenter,
+                      child: Center(
+                        child: RotationTransition(
+                          turns: _rotationController,
+                          child: Image.asset(
+                            IMAGECONST.callBackImage,
+                            width: MediaQuery.of(context).size.width * 1.2,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

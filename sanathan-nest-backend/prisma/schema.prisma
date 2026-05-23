@@ -1,0 +1,249 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// User role definition
+enum Role {
+  USER
+  GURUJI
+  ADMIN
+}
+
+// User account status
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+// Wallet transaction type
+enum TransactionType {
+  CREDIT
+  DEBIT
+}
+
+// Transaction payment status
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+// Guruji online status
+enum AvailabilityStatus {
+  AVAILABLE
+  BUSY
+  OFFLINE
+}
+
+// Consultation state
+enum ConsultationStatus {
+  REQUESTED
+  ACTIVE
+  COMPLETED
+  REJECTED
+  CANCELLED
+}
+
+// Waitlist states
+enum WaitlistStatus {
+  WAITING
+  CONNECTED
+  CANCELLED
+}
+
+// Marketplace listing status
+enum ListingStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// Astrological data types
+enum AstroDataType {
+  HOROSCOPE
+  PANCHANG
+}
+
+// Core User Entity (Lazy Auth optimized)
+model User {
+  id           String     @id @default(uuid())
+  phone        String?    @unique
+  email        String?    @unique
+  role         Role       @default(USER)
+  status       UserStatus @default(ACTIVE)
+  isAnonymous  Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  profile      Profile?
+  wallet       Wallet?
+  guruji       GurujiListing?
+  consultations Consultation[]
+  waitlists     Waitlist[]
+  enrollments   CourseEnrollment[]
+}
+
+// Detailed User Profile & Kundali limit control
+model Profile {
+  id                      String    @id @default(uuid())
+  userId                  String    @unique
+  name                    String?
+  gender                  String?
+  dateOfBirth             DateTime?
+  timeOfBirth             String?
+  placeOfBirth            String?
+  latitude                Float?
+  longitude               Float?
+  timezone                String?
+  language                String    @default("en")
+  lastKundaliChangeAt     DateTime?
+  kundaliChangesThisMonth Int       @default(0)
+  rashi                   String?
+  nakshatra               String?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// User Financial Wallet
+model Wallet {
+  id           String        @id @default(uuid())
+  userId       String        @unique
+  balance      Float         @default(0.0)
+  currency     String        @default("INR")
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+}
+
+// Ledger transactions for Wallets
+model Transaction {
+  id          String            @id @default(uuid())
+  walletId    String
+  amount      Float
+  type        TransactionType
+  status      TransactionStatus @default(PENDING)
+  description String?
+  referenceId String? // e.g. Payment Gateway Transaction ID
+  createdAt   DateTime          @default(now())
+
+  wallet      Wallet            @relation(fields: [walletId], references: [id], onDelete: Cascade)
+}
+
+// Guruji Directory Listing
+model GurujiListing {
+  id                 String             @id @default(uuid())
+  userId             String             @unique
+  skills             String // CSV or JSON string of skills
+  languages          String // CSV or JSON string of languages
+  experienceYears    Int                @default(0)
+  perMinuteCharge    Float              @default(0.0)
+  rating             Float              @default(5.0)
+  isOnline           Boolean            @default(false)
+  availabilityStatus AvailabilityStatus @default(OFFLINE)
+  bio                String?
+  avatarUrl          String?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  consultations      Consultation[]
+}
+
+// Call / Chat Consultations record
+model Consultation {
+  id          String             @id @default(uuid())
+  userId      String
+  gurujiId    String
+  type        String // "CHAT" or "CALL"
+  status      ConsultationStatus @default(REQUESTED)
+  startTime   DateTime?
+  endTime     DateTime?
+  totalCost   Float              @default(0.0)
+  rating      Int?
+  review      String?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  guruji      GurujiListing      @relation(fields: [gurujiId], references: [id], onDelete: Cascade)
+}
+
+// Consultations Waitlist Queue
+model Waitlist {
+  id        String         @id @default(uuid())
+  userId    String
+  gurujiId  String
+  status    WaitlistStatus @default(WAITING)
+  joinedAt  DateTime       @default(now())
+  createdAt DateTime       @default(now())
+
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Premium Spiritual / Astrological Courses
+model Course {
+  id           String             @id @default(uuid())
+  title        String
+  description  String
+  videoUrl     String?
+  youtubeLink  String?
+  price        Float              @default(0.0)
+  instructor   String
+  thumbnailUrl String?
+  isPublished  Boolean            @default(false)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  enrollments  CourseEnrollment[]
+}
+
+// Course Enrollment mapping
+model CourseEnrollment {
+  id         String   @id @default(uuid())
+  userId     String
+  courseId   String
+  enrolledAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+}
+
+// Spiritual Marketplace item
+model MarketplaceListing {
+  id           String        @id @default(uuid())
+  title        String
+  description  String
+  price        Float
+  providerName String
+  imageUrl     String?
+  status       ListingStatus @default(PENDING)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+// Cache table for pre-calculated Horoscope & Panchang data
+model CachedAstrology {
+  id        String        @id @default(uuid())
+  type      AstroDataType
+  key       String // e.g. "horoscope:aries:en", "panchang:delhi:hi"
+  data      String // JSON data content as string
+  date      String // YYYY-MM-DD format
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@unique([type, key, date])
+}

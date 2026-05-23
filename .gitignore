@@ -1,0 +1,17 @@
+# OS generated files
+.DS_Store
+Thumbs.db
+*.log
+
+# NestJS dependencies & builds
+node_modules/
+dist/
+.env
+.env.development
+
+# Flutter references builds (already copied clean, but kept for safety)
+build/
+.dart_tool/
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
