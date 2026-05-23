@@ -187,7 +187,7 @@
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      max-height: 80vh;
+      min-height: 100%;
     }
 
     .column-header {
@@ -246,8 +246,7 @@
       flex-direction: column;
       gap: 12px;
       padding: 16px;
-      overflow-y: auto;
-      max-height: calc(80vh - 65px);
+      overflow: visible;
     }
 
     .card {
@@ -259,6 +258,7 @@
       transition: var(--transition);
       position: relative;
       overflow: hidden;
+      cursor: pointer;
     }
     
     .card::before {
@@ -281,6 +281,12 @@
       transform: translateY(-3px) scale(1.01);
       border-color: rgba(212, 175, 55, 0.3);
       box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35);
+    }
+
+    .card:focus-visible {
+      outline: 2px solid var(--solar-amber);
+      outline-offset: 3px;
+      border-color: rgba(255, 159, 28, 0.5);
     }
 
     .card h3 {
@@ -374,6 +380,92 @@
       color: var(--text-secondary);
     }
 
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: rgba(3, 5, 12, 0.78);
+      backdrop-filter: blur(10px);
+    }
+
+    .modal-backdrop.is-open {
+      display: flex;
+    }
+
+    .task-modal {
+      width: min(680px, 100%);
+      border: 1px solid rgba(212, 175, 55, 0.22);
+      border-radius: 18px;
+      background: #0b0d17;
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.65);
+      overflow: hidden;
+    }
+
+    .task-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
+      padding: 22px 24px;
+      border-bottom: 1px solid rgba(212, 175, 55, 0.15);
+      background: rgba(16, 20, 35, 0.9);
+    }
+
+    .task-modal h2 {
+      margin: 8px 0 0;
+      color: #fff;
+      font-family: 'Outfit', sans-serif;
+      font-size: 24px;
+      line-height: 1.2;
+    }
+
+    .modal-column {
+      color: var(--solar-gold);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .modal-close {
+      width: 38px;
+      height: 38px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-primary);
+      font-size: 24px;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .modal-close:hover {
+      border-color: rgba(255, 159, 28, 0.45);
+      color: var(--solar-amber);
+    }
+
+    .task-modal-body {
+      padding: 24px;
+    }
+
+    .task-modal-body p {
+      margin: 0;
+      color: var(--text-secondary);
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    .modal-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 22px;
+    }
+
     @media (max-width: 1200px) {
       .board {
         grid-template-columns: repeat(2, 1fr);
@@ -407,7 +499,7 @@
       <div class="summary-stats">
         <div class="stat-pill">Platform: <span class="highlight">Supabase + NestJS</span></div>
         <div class="stat-pill">Flutter UI Engine: <span class="highlight">Outfit + Glassmorphism</span></div>
-        <div class="stat-pill">State: <span class="highlight">Phase 1 Complete, Phase 2 In-Progress</span></div>
+        <div class="stat-pill">State: <span class="highlight">Laravel Migration Mapped, Supabase Schema Next</span></div>
       </div>
     </header>
 
@@ -519,23 +611,23 @@
 
           <div class="card">
             <span class="priority-badge high">High</span>
-            <h3>Lazy Authentication Guards</h3>
-            <p>Write request filters and interceptors verifying Supabase Auth JWT tokens only for premium actions or wallet checkouts.</p>
+            <h3>Flutter API Compatibility Matrix</h3>
+            <p>Map the high-use Laravel mobile API routes to new NestJS /api/v1 endpoints and identify compatibility aliases needed during Flutter migration.</p>
             <div class="tags">
-              <span class="tag">NestJS</span>
-              <span class="tag">Security</span>
-              <span class="tag">JWT</span>
+              <span class="tag">Laravel API</span>
+              <span class="tag">Flutter</span>
+              <span class="tag">Contracts</span>
             </div>
           </div>
 
           <div class="card">
             <span class="priority-badge high">High</span>
-            <h3>Razorpay & Stripe Payment Webhooks</h3>
-            <p>Implement Razorpay, Stripe, and Cashfree payment confirmation controllers to handle safe user wallet credits and ledger entries.</p>
+            <h3>Supabase Migration Files</h3>
+            <p>Create the first Postgres migration set for identity, profiles, devices, wallets, payments, Guruji listings, consultations, and system flags.</p>
             <div class="tags">
-              <span class="tag">NestJS</span>
-              <span class="tag">Payments</span>
-              <span class="tag">Ledger</span>
+              <span class="tag">Postgres</span>
+              <span class="tag">Prisma</span>
+              <span class="tag">Schema</span>
             </div>
           </div>
 
@@ -588,20 +680,9 @@
       <article class="column progress">
         <div class="column-header">
           <h2 class="column-title"><span class="dot"></span>In Progress</h2>
-          <span class="count">2</span>
+          <span class="count">1</span>
         </div>
         <div class="cards">
-
-          <div class="card">
-            <span class="priority-badge high">High</span>
-            <h3>Wallet & Recharge API Module</h3>
-            <p>Writing standard Wallet recharge controllers, USD-to-INR conversion gates, partner payouts splits (70/30 commission ledger), and commission types.</p>
-            <div class="tags">
-              <span class="tag highlight">Coding</span>
-              <span class="tag">NestJS</span>
-              <span class="tag">Wallet</span>
-            </div>
-          </div>
 
           <div class="card">
             <span class="priority-badge high">High</span>
@@ -621,7 +702,7 @@
       <article class="column done">
         <div class="column-header">
           <h2 class="column-title"><span class="dot"></span>Completed</h2>
-          <span class="count">7</span>
+          <span class="count">14</span>
         </div>
         <div class="cards">
 
@@ -692,6 +773,83 @@
             </div>
           </div>
 
+          <div class="card">
+            <span class="priority-badge high">High</span>
+            <h3>Lazy Authentication Guards</h3>
+            <p>Added Supabase Bearer token validation for premium actions, with local x-user-id development fallback and automatic profile/wallet provisioning.</p>
+            <div class="tags">
+              <span class="tag">NestJS</span>
+              <span class="tag">Security</span>
+              <span class="tag">JWT</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <span class="priority-badge high">High</span>
+            <h3>Wallet & Recharge API Module</h3>
+            <p>Implemented authenticated wallet balance retrieval, recent ledger reads, and INR/USD recharge quote support using configurable conversion rates.</p>
+            <div class="tags">
+              <span class="tag">NestJS</span>
+              <span class="tag">Wallet</span>
+              <span class="tag">Ledger</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <span class="priority-badge high">High</span>
+            <h3>Payment Webhook Ledger Writers</h3>
+            <p>Added Razorpay, Stripe, and Cashfree webhook controllers with idempotent wallet credit transaction creation and local signature verification hooks.</p>
+            <div class="tags">
+              <span class="tag">NestJS</span>
+              <span class="tag">Payments</span>
+              <span class="tag">Ledger</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <span class="priority-badge high">High</span>
+            <h3>Legacy Laravel Migration Review</h3>
+            <p>Reviewed Laravel routes, models, controllers, SQL dump, and migrations; captured the Supabase/NestJS migration plan for preserving Flutter API behavior while scaling internals.</p>
+            <div class="tags">
+              <span class="tag">Migration</span>
+              <span class="tag">Supabase</span>
+              <span class="tag">Planning</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <span class="priority-badge high">High</span>
+            <h3>Canonical Supabase Schema Slice</h3>
+            <p>Expanded Prisma with Laravel-derived core tables for devices, system flags, recharge amounts, payment orders/events, Guruji categories/skills/documents/availability, consultation events, intake forms, and legacy ID mapping hooks.</p>
+            <div class="tags">
+              <span class="tag">Prisma</span>
+              <span class="tag">Supabase</span>
+              <span class="tag">Schema</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <span class="priority-badge high">High</span>
+            <h3>Supabase Environment Template</h3>
+            <p>Created backend .env and .env.example placeholders for Supabase URLs, database connection strings, service keys, payment secrets, realtime/media integrations, notifications, and AI/RAG providers.</p>
+            <div class="tags">
+              <span class="tag">Env</span>
+              <span class="tag">Supabase</span>
+              <span class="tag">Setup</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <span class="priority-badge medium">Medium</span>
+            <h3>Portable Local Env Sample</h3>
+            <p>Added a committed .env.local.sample file so the backend can be opened on another PC and copied into a private local .env without exposing real Supabase or provider secrets.</p>
+            <div class="tags">
+              <span class="tag">Env</span>
+              <span class="tag">Local Setup</span>
+              <span class="tag">Secrets</span>
+            </div>
+          </div>
+
         </div>
       </article>
 
@@ -702,5 +860,73 @@
       <div class="build-ver">Hub Version 2.6 (Comprehensive Sync)</div>
     </footer>
   </main>
+  <div class="modal-backdrop" id="taskModal" aria-hidden="true">
+    <section class="task-modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="task-modal-header">
+        <div>
+          <div class="modal-column" id="modalColumn"></div>
+          <h2 id="modalTitle"></h2>
+        </div>
+        <button class="modal-close" type="button" aria-label="Close task details">&times;</button>
+      </div>
+      <div class="task-modal-body">
+        <p id="modalDescription"></p>
+        <div class="modal-tags" id="modalTags"></div>
+      </div>
+    </section>
+  </div>
+  <script>
+    const modal = document.getElementById('taskModal');
+    const modalColumn = document.getElementById('modalColumn');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalDescription = document.getElementById('modalDescription');
+    const modalTags = document.getElementById('modalTags');
+    const closeButton = modal.querySelector('.modal-close');
+
+    document.querySelectorAll('.card').forEach((card) => {
+      card.setAttribute('role', 'button');
+      card.setAttribute('tabindex', '0');
+      card.addEventListener('click', () => openTask(card));
+      card.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          openTask(card);
+        }
+      });
+    });
+
+    function openTask(card) {
+      const column = card.closest('.column')?.querySelector('.column-title')?.textContent.trim() ?? 'Task';
+      const title = card.querySelector('h3')?.textContent.trim() ?? 'Task details';
+      const description = card.querySelector('p')?.textContent.trim() ?? 'No additional details were added for this task yet.';
+      const priority = card.querySelector('.priority-badge')?.outerHTML ?? '';
+      const tags = Array.from(card.querySelectorAll('.tag')).map((tag) => tag.outerHTML).join('');
+
+      modalColumn.textContent = column;
+      modalTitle.textContent = title;
+      modalDescription.textContent = description;
+      modalTags.innerHTML = `${priority}${tags}`;
+      modal.classList.add('is-open');
+      modal.setAttribute('aria-hidden', 'false');
+      closeButton.focus();
+    }
+
+    function closeTask() {
+      modal.classList.remove('is-open');
+      modal.setAttribute('aria-hidden', 'true');
+    }
+
+    closeButton.addEventListener('click', closeTask);
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal) {
+        closeTask();
+      }
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && modal.classList.contains('is-open')) {
+        closeTask();
+      }
+    });
+  </script>
 </body>
 </html>

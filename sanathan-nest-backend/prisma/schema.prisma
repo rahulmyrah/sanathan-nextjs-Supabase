@@ -35,6 +35,23 @@ enum TransactionStatus {
   FAILED
 }
 
+// Payment provider rails supported by the wallet ledger
+enum PaymentProvider {
+  RAZORPAY
+  STRIPE
+  CASHFREE
+  MANUAL
+}
+
+// External payment order state
+enum PaymentOrderStatus {
+  CREATED
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+}
+
 // Guruji online status
 enum AvailabilityStatus {
   AVAILABLE
@@ -45,10 +62,20 @@ enum AvailabilityStatus {
 // Consultation state
 enum ConsultationStatus {
   REQUESTED
+  PENDING
+  ACCEPTED
+  CONFIRMED
   ACTIVE
   COMPLETED
   REJECTED
   CANCELLED
+}
+
+// Consultation session kind mapped from Laravel chatrequest/callrequest
+enum ConsultationType {
+  CHAT
+  AUDIO_CALL
+  VIDEO_CALL
 }
 
 // Waitlist states
@@ -71,23 +98,55 @@ enum AstroDataType {
   PANCHANG
 }
 
+// Core key-value settings migrated from Laravel systemflag
+model SystemFlag {
+  id          String   @id @default(uuid())
+  legacyId    Int?
+  name        String   @unique
+  displayName String?
+  value       String?
+  valueType   String?
+  groupName   String?
+  description String?
+  isActive    Boolean  @default(true)
+  isPublic    Boolean  @default(false)
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive, isPublic])
+  @@index([legacyId])
+}
+
 // Core User Entity (Lazy Auth optimized)
 model User {
   id           String     @id @default(uuid())
+  legacyId     Int?       @unique
   phone        String?    @unique
   email        String?    @unique
   role         Role       @default(USER)
   status       UserStatus @default(ACTIVE)
   isAnonymous  Boolean    @default(true)
+  countryCode  String?    @default("+91")
+  referralCode String?    @unique
+  referredById String?
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
-  profile      Profile?
-  wallet       Wallet?
-  guruji       GurujiListing?
+  profile       Profile?
+  wallet        Wallet?
+  guruji        GurujiListing?
+  devices       UserDevice[]
+  paymentOrders PaymentOrder[]
   consultations Consultation[]
   waitlists     Waitlist[]
   enrollments   CourseEnrollment[]
+  intakeForms   IntakeForm[]
+  referredBy    User?              @relation("UserReferrals", fields: [referredById], references: [id])
+  referrals     User[]             @relation("UserReferrals")
+
+  @@index([legacyId])
+  @@index([phone, countryCode])
 }
 
 // Detailed User Profile & Kundali limit control
@@ -107,20 +166,53 @@ model Profile {
   kundaliChangesThisMonth Int       @default(0)
   rashi                   String?
   nakshatra               String?
+  avatarUrl               String?
+  addressLine1            String?
+  addressLine2            String?
+  country                 String?
+  city                    String?
+  pincode                 String?
+  isComplete              Boolean   @default(false)
+  legacyPayload           Json?
   createdAt               DateTime  @default(now())
   updatedAt               DateTime  @updatedAt
 
-  user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Flutter device registrations migrated from user_device_details
+model UserDevice {
+  id                String   @id @default(uuid())
+  legacyId          Int?
+  userId            String
+  appId             Int      @default(1)
+  deviceId          String?
+  fcmToken          String?
+  oneSignalId       String?
+  webSubscriptionId String?
+  deviceLocation    String?
+  manufacturer      String?
+  model             String?
+  appVersion        String?
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([legacyId])
+  @@index([userId, appId])
+  @@index([deviceId])
 }
 
 // User Financial Wallet
 model Wallet {
-  id           String        @id @default(uuid())
-  userId       String        @unique
-  balance      Float         @default(0.0)
-  currency     String        @default("INR")
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  balance   Float    @default(0.0)
+  currency  String   @default("INR")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions Transaction[]
@@ -130,82 +222,336 @@ model Wallet {
 model Transaction {
   id          String            @id @default(uuid())
   walletId    String
+  legacyId    Int?
   amount      Float
+  coinAmount  Int               @default(0)
   type        TransactionType
   status      TransactionStatus @default(PENDING)
+  walletType  String?
+  provider    PaymentProvider?
   description String?
   referenceId String? // e.g. Payment Gateway Transaction ID
+  orderId     String?
+  gurujiId    String?
+  metadata    Json?
   createdAt   DateTime          @default(now())
 
-  wallet      Wallet            @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([legacyId])
+  @@index([referenceId])
+  @@index([orderId])
+}
+
+// Recharge denominations migrated from Laravel rechargeamount
+model RechargeAmount {
+  id        String   @id @default(uuid())
+  legacyId  Int?
+  amountInr Float
+  amountUsd Float?
+  cashback  Float    @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([legacyId])
+  @@index([isActive, amountInr])
+}
+
+// Payment order created before gateway redirect/SDK confirmation
+model PaymentOrder {
+  id                String             @id @default(uuid())
+  legacyId          Int?
+  userId            String
+  provider          PaymentProvider
+  status            PaymentOrderStatus @default(CREATED)
+  purpose           String             @default("wallet")
+  amount            Float
+  currency          String             @default("INR")
+  conversionRate    Float              @default(1)
+  cashbackAmount    Float              @default(0)
+  gstAmount         Float              @default(0)
+  providerOrderId   String?
+  providerPaymentId String?
+  signature         String?
+  rawPayload        Json?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  user   User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  events PaymentEvent[]
+
+  @@index([legacyId])
+  @@index([userId, status])
+  @@index([provider, providerOrderId])
+}
+
+// Append-only payment webhook/audit trail
+model PaymentEvent {
+  id             String          @id @default(uuid())
+  paymentOrderId String?
+  provider       PaymentProvider
+  eventType      String
+  referenceId    String?
+  payload        Json
+  receivedAt     DateTime        @default(now())
+
+  paymentOrder PaymentOrder? @relation(fields: [paymentOrderId], references: [id], onDelete: SetNull)
+
+  @@index([provider, referenceId])
+  @@index([paymentOrderId])
+}
+
+model GurujiCategory {
+  id        String   @id @default(uuid())
+  legacyId  Int?
+  name      String
+  imageUrl  String?
+  sortOrder Int      @default(100)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  listings GurujiListingCategory[]
+
+  @@unique([name])
+  @@index([legacyId])
+}
+
+model GurujiSkill {
+  id        String   @id @default(uuid())
+  legacyId  Int?
+  name      String
+  sortOrder Int      @default(100)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  listings GurujiListingSkill[]
+
+  @@unique([name])
+  @@index([legacyId])
 }
 
 // Guruji Directory Listing
 model GurujiListing {
   id                 String             @id @default(uuid())
+  legacyId           Int?               @unique
   userId             String             @unique
-  skills             String // CSV or JSON string of skills
-  languages          String // CSV or JSON string of languages
+  slug               String?            @unique
+  displayName        String?
+  phone              String?
+  email              String?
+  skills             String // Legacy CSV/JSON string of skills
+  languages          String // Legacy CSV/JSON string of languages
   experienceYears    Int                @default(0)
   perMinuteCharge    Float              @default(0.0)
+  audioCallRate      Float              @default(0.0)
+  videoCallRate      Float              @default(0.0)
+  emergencyChatRate  Float              @default(0.0)
+  emergencyAudioRate Float              @default(0.0)
+  emergencyVideoRate Float              @default(0.0)
   rating             Float              @default(5.0)
   isOnline           Boolean            @default(false)
+  isVerified         Boolean            @default(false)
+  isActive           Boolean            @default(true)
   availabilityStatus AvailabilityStatus @default(OFFLINE)
+  chatStatus         AvailabilityStatus @default(OFFLINE)
+  callStatus         AvailabilityStatus @default(OFFLINE)
   bio                String?
   avatarUrl          String?
+  bankDetails        Json?
+  socialLinks        Json?
+  verificationMeta   Json?
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
 
-  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  consultations      Consultation[]
+  user          User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  consultations Consultation[]
+  categories    GurujiListingCategory[]
+  skillLinks    GurujiListingSkill[]
+  availability  GurujiAvailability[]
+  documents     GurujiDocument[]
+
+  @@index([legacyId])
+  @@index([isActive, isVerified])
+  @@index([chatStatus, callStatus])
+}
+
+model GurujiListingCategory {
+  gurujiId   String
+  categoryId String
+
+  guruji   GurujiListing  @relation(fields: [gurujiId], references: [id], onDelete: Cascade)
+  category GurujiCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([gurujiId, categoryId])
+}
+
+model GurujiListingSkill {
+  gurujiId String
+  skillId  String
+
+  guruji GurujiListing @relation(fields: [gurujiId], references: [id], onDelete: Cascade)
+  skill  GurujiSkill   @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([gurujiId, skillId])
+}
+
+model GurujiAvailability {
+  id        String   @id @default(uuid())
+  legacyId  Int?
+  gurujiId  String
+  day       String
+  fromTime  String
+  toTime    String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  guruji GurujiListing @relation(fields: [gurujiId], references: [id], onDelete: Cascade)
+
+  @@index([legacyId])
+  @@index([gurujiId, day])
+}
+
+model GurujiDocument {
+  id        String   @id @default(uuid())
+  legacyId  Int?
+  gurujiId  String
+  type      String
+  name      String?
+  url       String?
+  status    String   @default("pending")
+  metadata  Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  guruji GurujiListing @relation(fields: [gurujiId], references: [id], onDelete: Cascade)
+
+  @@index([legacyId])
+  @@index([gurujiId, type])
 }
 
 // Call / Chat Consultations record
 model Consultation {
-  id          String             @id @default(uuid())
-  userId      String
-  gurujiId    String
-  type        String // "CHAT" or "CALL"
-  status      ConsultationStatus @default(REQUESTED)
-  startTime   DateTime?
-  endTime     DateTime?
-  totalCost   Float              @default(0.0)
-  rating      Int?
-  review      String?
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
+  id                       String             @id @default(uuid())
+  legacyChatId             Int?
+  legacyCallId             Int?
+  userId                   String
+  gurujiId                 String
+  type                     ConsultationType
+  status                   ConsultationStatus @default(REQUESTED)
+  channelName              String?
+  provider                 String?
+  token                    String?
+  requestedDurationSeconds Int?
+  actualDurationSeconds    Int?
+  ratePerMinute            Float              @default(0.0)
+  deduction                Float              @default(0.0)
+  gurujiPayout             Float              @default(0.0)
+  adminCommission          Float              @default(0.0)
+  isFreeSession            Boolean            @default(false)
+  isEmergency              Boolean            @default(false)
+  scheduledAt              DateTime?
+  startTime                DateTime?
+  endTime                  DateTime?
+  totalCost                Float              @default(0.0)
+  rating                   Int?
+  review                   String?
+  metadata                 Json?
+  createdAt                DateTime           @default(now())
+  updatedAt                DateTime           @updatedAt
 
-  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  guruji      GurujiListing      @relation(fields: [gurujiId], references: [id], onDelete: Cascade)
+  user   User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  guruji GurujiListing       @relation(fields: [gurujiId], references: [id], onDelete: Cascade)
+  events ConsultationEvent[]
+
+  @@index([legacyChatId])
+  @@index([legacyCallId])
+  @@index([userId, status])
+  @@index([gurujiId, status])
+}
+
+model ConsultationEvent {
+  id             String   @id @default(uuid())
+  consultationId String
+  eventType      String
+  actorUserId    String?
+  payload        Json?
+  createdAt      DateTime @default(now())
+
+  consultation Consultation @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+
+  @@index([consultationId, createdAt])
+  @@index([eventType])
+}
+
+// Intake form used before chat/call consultations
+model IntakeForm {
+  id                String    @id @default(uuid())
+  legacyId          Int?
+  userId            String
+  name              String?
+  phoneNumber       String?
+  countryCode       String?
+  gender            String?
+  birthDate         DateTime?
+  birthTime         String?
+  birthPlace        String?
+  maritalStatus     String?
+  occupation        String?
+  topicOfConcern    String?
+  partnerName       String?
+  partnerBirthDate  DateTime?
+  partnerBirthTime  String?
+  partnerBirthPlace String?
+  latitude          Float?
+  longitude         Float?
+  timezone          String?
+  metadata          Json?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([legacyId])
+  @@index([userId, createdAt])
 }
 
 // Consultations Waitlist Queue
 model Waitlist {
-  id        String         @id @default(uuid())
-  userId    String
-  gurujiId  String
-  status    WaitlistStatus @default(WAITING)
-  joinedAt  DateTime       @default(now())
-  createdAt DateTime       @default(now())
+  id                   String         @id @default(uuid())
+  legacyId             Int?
+  userId               String
+  gurujiId             String
+  status               WaitlistStatus @default(WAITING)
+  requestType          String?
+  estimatedWaitSeconds Int?
+  joinedAt             DateTime       @default(now())
+  createdAt            DateTime       @default(now())
 
-  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([legacyId])
+  @@index([gurujiId, status, joinedAt])
 }
 
 // Premium Spiritual / Astrological Courses
 model Course {
-  id           String             @id @default(uuid())
+  id           String   @id @default(uuid())
   title        String
   description  String
   videoUrl     String?
   youtubeLink  String?
-  price        Float              @default(0.0)
+  price        Float    @default(0.0)
   instructor   String
   thumbnailUrl String?
-  isPublished  Boolean            @default(false)
-  createdAt    DateTime           @default(now())
-  updatedAt    DateTime           @updatedAt
+  isPublished  Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  enrollments  CourseEnrollment[]
+  enrollments CourseEnrollment[]
 }
 
 // Course Enrollment mapping
@@ -216,8 +562,8 @@ model CourseEnrollment {
   enrolledAt DateTime @default(now())
   createdAt  DateTime @default(now())
 
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@unique([userId, courseId])
 }

@@ -5,6 +5,9 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { AstrologyModule } from './astrology/astrology.module';
+import { AuthModule } from './auth/auth.module';
+import { WalletModule } from './wallet/wallet.module';
+import { PaymentsModule } from './payments/payments.module';
 
 @Module({
   imports: [
@@ -13,7 +16,10 @@ import { AstrologyModule } from './astrology/astrology.module';
     }),
     ScheduleModule.forRoot(),
     PrismaModule,
+    AuthModule,
     AstrologyModule,
+    WalletModule,
+    PaymentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
